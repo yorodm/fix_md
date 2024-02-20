@@ -14,7 +14,7 @@ readme = "README.md"
 requires-python = ">= 3.8"
 
 [project.scripts]
-hello = "fixer:fix"
+fix_md = "fixer:fix"
 
 [build-system]
 requires = ["hatchling"]
