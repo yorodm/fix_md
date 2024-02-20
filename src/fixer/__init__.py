@@ -15,10 +15,10 @@ from pathlib import Path
 class OrgRenderer(BaseRenderer):
     """A renderer for org mode."""
 
-    def __init__(self, metadata: dict, extras, kwargs):
+    def __init__(self, metadata: dict, *extras, **kwargs):
         """Initialize the renderer."""
         self.metadata = metadata
-        super().__init__(extras, kwargs)
+        super().__init__(*extras, **kwargs)
 
     def render_raw_text(self, token) -> str:
         """
@@ -60,7 +60,7 @@ class OrgRenderer(BaseRenderer):
 
     def render_line_break(self, token: span_token.LineBreak) -> str:
         """Render line break."""
-        return self.render_inner(token)
+        return "\n"
 
     def render_heading(self, token: block_token.Heading) -> str:
         """Render headings."""
@@ -72,11 +72,22 @@ class OrgRenderer(BaseRenderer):
 
     def render_paragraph(self, token: block_token.Paragraph) -> str:
         """Render paragram."""
-        return self.render_inner(token)
+        output = ''.join(["\n", self.render_inner(token), "\n"])
+        return output
 
     def render_block_code(self, token: block_token.BlockCode) -> str:
         """Render code block."""
-        return self.render_inner(token)
+        output = [
+            "\n",
+            "#+begin_src",
+            f" {token.language}",
+            "\n",
+            self.render_inner(token),
+            "\n",
+            "#+end_src",
+            "\n"
+        ]
+        return ''.join(output)
 
     def render_list(self, token: block_token.List) -> str:
         """Render list."""
@@ -95,13 +106,30 @@ class OrgRenderer(BaseRenderer):
         return self.render_inner(token)
 
     def render_table_row(self, token: block_token.TableRow) -> str:
-        """Render table row"""
+        """Render table row."""
         return self.render_inner(token)
 
     def render_thematic_break(self, token: block_token.ThematicBreak) -> str:
         """Render whatever this is."""
         return self.render_inner(token)
 
+    def render_document(self, token: Document) -> str:
+        """Render a document converting metadata to Org Mode directives."""
+        title = self.metadata.get("title", "")
+        date = self.metadata.get("date", None)
+        author = self.metadata.get("author", None)
+        output = [
+            f"#+title: {title}",
+            "\n",
+            f"#+date: {date}" if date else "\n",
+            "\n",
+            f"#+author: {author}" if author else "\n",
+            "\n",
+            self.render_inner(token)
+        ]
+        prev = object() #  marker
+        output = [prev := i for i in output if prev != i]
+        return ''.join(output)
 
 
 class Runner:
@@ -132,7 +160,8 @@ class Runner:
         output = self.output_dir / (filename + ".org")
         if output.exists() and not self.clobber:
             return
-        matter = frontmatter.load(filename)
+        print(f"Converting ${path} into ${output}")
+        matter = frontmatter.load(path)
         with OrgRenderer(matter.metadata) as renderer:
             doc = Document(matter.content)
             output.write_text(renderer.render(doc))
