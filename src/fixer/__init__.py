@@ -4,7 +4,7 @@ Fix Hugo markdown files (turn them into Org mode files).
 Using frontmatter to parse the front matter, mistletoe as markdown
 parser and writing a simple OrgMode renderer
 """
-
+import re
 import frontmatter
 import click
 from mistletoe.base_renderer import BaseRenderer
@@ -12,18 +12,46 @@ from mistletoe import Document, block_token, span_token
 from pathlib import Path
 
 
+class FigureTag(span_token.SpanToken):
+    """Parse hugo style figure tag."""
+
+    pattern = re.compile(r"{{<\s+figure src=\"*(.+?)\"\s+>}}")
+
+    def __init__(self, match: re.Match):
+        """Get the target from the match."""
+        self.target = match.group(1)
+
+
+class RefTag(span_token.SpanToken):
+    """Parse hugo ref tag."""
+
+    pattern = re.compile(r"{{<\s+ref \"*(.+?)\"\s+>}}")
+
+    def __init__(self, match: re.Match):
+        """Get the target from the match."""
+        self.target = match.group(1)
+
+
+class RelRefTag(span_token.SpanToken):
+    """Parse hugo relref tag."""
+
+    pattern = re.compile(r"{{<\s+refrel \"*(.+?)\"\s+>}}")
+
+    def __init__(self, match: re.Match):
+        """Get the target from the match."""
+        self.target = match.group(1)
+
+
 class OrgRenderer(BaseRenderer):
     """A renderer for org mode."""
 
-    def __init__(self, metadata: dict, *extras, **kwargs):
+    def __init__(self, metadata: dict):
         """Initialize the renderer."""
         self.metadata = metadata
-        super().__init__(*extras, **kwargs)
+        super().__init__(FigureTag, RelRefTag, RefTag)
 
     def render_raw_text(self, token) -> str:
-        """
-        Default render method for RawText. Simply return token.content.
-        """
+        """Render method for RawText. Simply return token.content."""
         return token.content
 
     def render_strong(self, token: span_token.Strong) -> str:
@@ -133,9 +161,21 @@ class OrgRenderer(BaseRenderer):
             "\n",
             self.render_inner(token)
         ]
-        prev = object() #  marker
+        prev = object()  # marker
         output = [prev := i for i in output if prev != i]
         return ''.join(output)
+
+    def render_rel_ref_tag(self, token: RelRefTag) -> str:
+        """Render Hugo rel ref."""
+        return token.target
+
+    def render_ref_tag(self, token: RefTag) -> str:
+        """Render Hufo ref."""
+        return token.target
+
+    def render_figure_tag(self, token: FigureTag) -> str:
+        """Render Hugo figure."""
+        return token.target
 
 
 class Runner:
