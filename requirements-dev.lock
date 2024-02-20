@@ -10,6 +10,7 @@
 -e file:.
 astroid==3.0.3
 autopep8==2.0.4
+click==8.1.7
 dill==0.3.8
 docstring-to-markdown==0.14
 flake8==7.0.0
@@ -35,6 +36,7 @@ rope==1.12.0
 snowballstemmer==2.2.0
 tomli==2.0.1
 tomlkit==0.12.3
+typing-extensions==4.9.0
 ujson==5.9.0
 whatthepatch==1.0.5
 yapf==0.40.2
