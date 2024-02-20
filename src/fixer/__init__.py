@@ -28,7 +28,7 @@ class OrgRenderer(BaseRenderer):
 
     def render_strong(self, token: span_token.Strong) -> str:
         """Render bold."""
-        return self.render_inner(token)
+        return "*" + self.render_inner(token) + "*"
 
     def render_emphasis(self, token: span_token.Emphasis) -> str:
         """Render emph."""
@@ -36,7 +36,7 @@ class OrgRenderer(BaseRenderer):
 
     def render_inline_code(self, token: span_token.InlineCode) -> str:
         """Render inline code."""
-        return self.render_inner(token)
+        return "~" + self.render_inner(token) + "~"
 
     def render_strikethrough(self, token: span_token.Strikethrough) -> str:
         """Render strikethrough."""
@@ -48,7 +48,7 @@ class OrgRenderer(BaseRenderer):
 
     def render_link(self, token: span_token.Link) -> str:
         """Render link."""
-        return self.render_inner(token)
+        return f"[[{token.target}][{token.label}]]"
 
     def render_auto_link(self, token: span_token.AutoLink) -> str:
         """Render link."""
@@ -64,7 +64,14 @@ class OrgRenderer(BaseRenderer):
 
     def render_heading(self, token: block_token.Heading) -> str:
         """Render headings."""
-        return self.render_inner(token)
+        output = [
+            "\n",
+            "*" * token.level,
+            " ",
+            self.render_inner(token),
+            "\n"
+        ]
+        return ''.join(output)
 
     def render_quote(self, token: block_token.Quote) -> str:
         """Render quotes."""
@@ -83,7 +90,6 @@ class OrgRenderer(BaseRenderer):
             f" {token.language}",
             "\n",
             self.render_inner(token),
-            "\n",
             "#+end_src",
             "\n"
         ]
