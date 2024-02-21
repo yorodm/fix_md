@@ -25,7 +25,7 @@ class FigureTag(span_token.SpanToken):
 class RefTag(span_token.SpanToken):
     """Parse hugo ref tag."""
 
-    pattern = re.compile(r"{{<\s+ref \"*(.+?)\"\s+>}}")
+    pattern = re.compile(r"\[*(.+?)\]\({{<\s*ref\s+\"*(.+?)\"\s*>}}\)")
 
     def __init__(self, match: re.Match):
         """Get the target from the match."""
@@ -35,7 +35,7 @@ class RefTag(span_token.SpanToken):
 class RelRefTag(span_token.SpanToken):
     """Parse hugo relref tag."""
 
-    pattern = re.compile(r"{{<\s+refrel \"*(.+?)\"\s+>}}")
+    pattern = re.compile(r"\[*(.+?)\]\({{<\s*relref \"*(.+?)\"\s*>}}\)")
 
     def __init__(self, match: re.Match):
         """Get the target from the match."""
@@ -168,10 +168,12 @@ class OrgRenderer(BaseRenderer):
 
     def render_rel_ref_tag(self, token: RelRefTag) -> str:
         """Render Hugo rel ref."""
+        print("RELREF!")
         return token.target
 
     def render_ref_tag(self, token: RefTag) -> str:
         """Render Hufo ref."""
+        print("REF!")
         return token.target
 
     def render_figure_tag(self, token: FigureTag) -> str:
