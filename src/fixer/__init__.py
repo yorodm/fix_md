@@ -76,11 +76,12 @@ class OrgRenderer(BaseRenderer):
 
     def render_link(self, token: span_token.Link) -> str:
         """Render link."""
-        return f"[[{token.target}][{token.label}]]"
+        title = self.render_inner(token)
+        return f"[[{token.target}][{title}]]"
 
     def render_auto_link(self, token: span_token.AutoLink) -> str:
         """Render link."""
-        return self.render_inner(token)
+        return self.render_link(token)
 
     def render_escape_sequence(self, token: span_token.EscapeSequence) -> str:
         """Render scape sequence."""
@@ -88,7 +89,7 @@ class OrgRenderer(BaseRenderer):
 
     def render_line_break(self, token: span_token.LineBreak) -> str:
         """Render line break."""
-        return "\n"
+        return ("\n" if not token.soft else " ")
 
     def render_heading(self, token: block_token.Heading) -> str:
         """Render headings."""
@@ -175,7 +176,7 @@ class OrgRenderer(BaseRenderer):
 
     def render_figure_tag(self, token: FigureTag) -> str:
         """Render Hugo figure."""
-        return token.target
+        return f"[[{token.target}]]"
 
 
 class Runner:
