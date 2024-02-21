@@ -29,17 +29,18 @@ class RefTag(span_token.SpanToken):
 
     def __init__(self, match: re.Match):
         """Get the target from the match."""
-        self.target = match.group(1)
+        self.title = match.group(1)
+        self.target = match.group(2)
 
 
-class RelRefTag(span_token.SpanToken):
+class RelRefTag(RefTag):
     """Parse hugo relref tag."""
 
     pattern = re.compile(r"\[*(.+?)\]\({{<\s*relref \"*(.+?)\"\s*>}}\)")
 
     def __init__(self, match: re.Match):
         """Get the target from the match."""
-        self.target = match.group(1)
+        super().__init__(match)
 
 
 class OrgRenderer(BaseRenderer):
@@ -94,11 +95,10 @@ class OrgRenderer(BaseRenderer):
     def render_heading(self, token: block_token.Heading) -> str:
         """Render headings."""
         output = [
-            "\n",
             "*" * token.level,
             " ",
             self.render_inner(token),
-            "\n"
+            2 * "\n"  # Leave an empty line after headings
         ]
         return ''.join(output)
 
@@ -108,19 +108,19 @@ class OrgRenderer(BaseRenderer):
 
     def render_paragraph(self, token: block_token.Paragraph) -> str:
         """Render paragram."""
-        output = ''.join(["\n", self.render_inner(token), "\n"])
+        # Add to line breaks so the org parser doesn't mix paragraphs
+        output = ''.join([self.render_inner(token), 2 * "\n"])
         return output
 
     def render_block_code(self, token: block_token.BlockCode) -> str:
         """Render code block."""
         output = [
-            "\n",
             "#+begin_src",
             f" {token.language}",
             "\n",
             self.render_inner(token),
             "#+end_src",
-            "\n"
+            2 * "\n"  # Leave an empty line after code blocks
         ]
         return ''.join(output)
 
@@ -130,7 +130,14 @@ class OrgRenderer(BaseRenderer):
 
     def render_list_item(self, token: block_token.ListItem) -> str:
         """Render list item."""
-        return self.render_inner(token)
+        from pprint import pprint
+        pprint(vars(token))
+        output = [
+            token.prepend * " ",
+            "- ",
+            self.render_inner(token)
+        ]
+        return ''.join(output)
 
     def render_table(self, token: block_token.Table) -> str:
         """Render table."""
@@ -156,10 +163,10 @@ class OrgRenderer(BaseRenderer):
         output = [
             f"#+title: {title}",
             "\n",
-            f"#+date: {date}" if date else "\n",
+            f"#+date: {date}" if date else "",
             "\n",
-            f"#+author: {author}" if author else "\n",
-            "\n",
+            f"#+author: {author}" if author else "",
+            "\n",  # empty line after the preamble
             self.render_inner(token)
         ]
         prev = object()  # marker
@@ -168,13 +175,11 @@ class OrgRenderer(BaseRenderer):
 
     def render_rel_ref_tag(self, token: RelRefTag) -> str:
         """Render Hugo rel ref."""
-        print("RELREF!")
-        return token.target
+        return f"[[{token.target}][{token.title}]]"
 
     def render_ref_tag(self, token: RefTag) -> str:
         """Render Hufo ref."""
-        print("REF!")
-        return token.target
+        return f"[[{token.target}][{token.title}]]"
 
     def render_figure_tag(self, token: FigureTag) -> str:
         """Render Hugo figure."""
